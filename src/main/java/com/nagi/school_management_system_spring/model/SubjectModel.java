@@ -34,8 +34,8 @@ public class SubjectModel {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @NotBlank(message = "Name is mandatory!!")
-    private String name;
+    @NotBlank(message = "Subject name is mandatory!!")
+    private String subjectName;
 
     @NotBlank(message = "Code is mandatory!!")
     private String code;

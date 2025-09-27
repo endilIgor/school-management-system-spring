@@ -1,13 +1,12 @@
 package com.nagi.school_management_system_spring.model;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import com.nagi.school_management_system_spring.model.enums.ShiftEnum;
-
-import java.util.List;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -43,9 +42,6 @@ public class ClassroomModel {
 
     @NotBlank(message = "Name is mandatory!!")
     private String name;
-
-    @NotBlank(message = "Year is mandatory!!")
-    private String year;
 
     @NotBlank(message = "Grade is mandatory!!")
     private String grade;

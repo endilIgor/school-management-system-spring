@@ -1,15 +1,13 @@
 package com.nagi.school_management_system_spring.model;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import com.nagi.school_management_system_spring.model.enums.StatusEnum;
-
-import java.util.List;
+import com.nagi.school_management_system_spring.model.enums.StatusTeacherEnum;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -55,13 +53,13 @@ public class TeacherModel {
 
     @NotNull(message = "Teacher status is mandatory!!")
     @Enumerated(EnumType.STRING)
-    private StatusEnum status;
+    private StatusTeacherEnum status;
 
     @NotNull(message = "Salary is mandatory!!")
     private BigDecimal salary;
 
     @NotNull(message = "Hire Date is mandatory!!")
-    private LocalDate hireDate;
+    private LocalDateTime hireDate;
 
     @Column(name = "created_at", nullable = false, updatable = false)
     @CreationTimestamp

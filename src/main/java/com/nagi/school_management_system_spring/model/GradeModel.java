@@ -60,6 +60,7 @@ public class GradeModel {
     private EvaluationTypeEnum evaluationType;
 
     @NotNull(message= "Value is mandatory!!")
+    @Column(name = "grade_value")
     private BigDecimal value;
 
     @NotNull(message = "Record date is mandatory!!")

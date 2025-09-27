@@ -1,6 +1,6 @@
 package com.nagi.school_management_system_spring.model.enums;
 
-public enum StatusEnum {
+public enum StatusTeacherEnum {
     ACTIVE,
     INACTIVE, 
     LICENSE, 
