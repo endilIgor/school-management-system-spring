@@ -58,7 +58,6 @@ public class TeacherModel {
     @NotNull(message = "Salary is mandatory!!")
     private BigDecimal salary;
 
-    @NotNull(message = "Hire Date is mandatory!!")
     private LocalDateTime hireDate;
 
     @Column(name = "created_at", nullable = false, updatable = false)
