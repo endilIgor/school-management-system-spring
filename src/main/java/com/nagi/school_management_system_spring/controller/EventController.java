@@ -6,7 +6,6 @@ import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,7 +17,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nagi.school_management_system_spring.model.EventModel;
+import com.nagi.school_management_system_spring.dto.EventRequestDTO;
+import com.nagi.school_management_system_spring.dto.EventResponseDTO;
 import com.nagi.school_management_system_spring.model.enums.EventTypeEnum;
 import com.nagi.school_management_system_spring.service.EventService;
 
@@ -32,77 +32,52 @@ public class EventController {
     private EventService eventService;
 
     @GetMapping
-    public ResponseEntity<List<EventModel>> getAllEvents(
+    public ResponseEntity<List<EventResponseDTO>> getAllEvents(
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate date,
             @RequestParam(required = false) EventTypeEnum type) {
 
-        try {
-            if (date != null) {
-                List<EventModel> events = eventService.findEventsByDate(date);
-                return ResponseEntity.ok(events);
-            } else if (type != null) {
-                List<EventModel> events = eventService.findEventsByType(type);
-                return ResponseEntity.ok(events);
-            } else {
-                List<EventModel> events = eventService.listEvents();
-                return ResponseEntity.ok(events);
-            }
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        List<EventResponseDTO> events;
+        if (date != null) {
+            events = eventService.findEventsByDate(date);
+        } else if (type != null) {
+            events = eventService.findEventsByType(type);
+        } else {
+            events = eventService.listEvents();
         }
+        return ResponseEntity.ok(events);
     }
 
     @GetMapping("/calendar/{month}/{year}")
-    public ResponseEntity<List<EventModel>> getEventsByMonthYear(
+    public ResponseEntity<List<EventResponseDTO>> getEventsByMonthYear(
             @PathVariable int month,
             @PathVariable int year) {
-        try {
-            List<EventModel> events = eventService.findEventsByMonthYear(month, year);
-            return ResponseEntity.ok(events);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+        List<EventResponseDTO> events = eventService.findEventsByMonthYear(month, year);
+        return ResponseEntity.ok(events);
     }
 
     @PostMapping
-    public ResponseEntity<EventModel> createEvent(@Valid @RequestBody EventModel event) {
-        try {
-            EventModel createdEvent = eventService.createEvent(event);
-            return ResponseEntity.status(HttpStatus.CREATED).body(createdEvent);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+    public ResponseEntity<EventResponseDTO> createEvent(@Valid @RequestBody EventRequestDTO requestDTO) {
+        EventResponseDTO event = eventService.createEvent(requestDTO);
+        return ResponseEntity.ok(event);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<EventModel> updateEvent(
+    public ResponseEntity<EventResponseDTO> updateEvent(
             @PathVariable Long id,
-            @Valid @RequestBody EventModel event) {
-        try {
-            EventModel updatedEvent = eventService.updateEvent(id, event);
-            return ResponseEntity.ok(updatedEvent);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+            @Valid @RequestBody EventRequestDTO requestDTO) {
+        EventResponseDTO event = eventService.updateEvent(id, requestDTO);
+        return ResponseEntity.ok(event);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEvent(@PathVariable Long id) {
-        try {
-            eventService.deleteEvent(id);
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        eventService.deleteEvent(id);
+        return ResponseEntity.ok().build();
     }
 
     @PostMapping("/{id}/notify")
     public ResponseEntity<Map<String, Object>> notifyParticipants(@PathVariable Long id) {
-        try {
-            Map<String, Object> notification = eventService.notifyParticipants(id);
-            return ResponseEntity.ok(notification);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        Map<String, Object> notification = eventService.notifyParticipants(id);
+        return ResponseEntity.ok(notification);
     }
 }

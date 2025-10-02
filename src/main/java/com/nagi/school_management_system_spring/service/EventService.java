@@ -4,10 +4,14 @@ import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.nagi.school_management_system_spring.dto.EventRequestDTO;
+import com.nagi.school_management_system_spring.dto.EventResponseDTO;
+import com.nagi.school_management_system_spring.mapper.EventMapper;
 import com.nagi.school_management_system_spring.model.EventModel;
 import com.nagi.school_management_system_spring.model.enums.EventTypeEnum;
 import com.nagi.school_management_system_spring.repository.EventRepository;
@@ -20,16 +24,31 @@ public class EventService {
     @Autowired
     private EventRepository eventRepository;
 
+    @Autowired
+    private EventMapper eventMapper;
+
     @Transactional
-    public EventModel createEvent(EventModel event) {
-        if (event.getStartDate().isAfter(event.getEndDate())) {
+    public EventResponseDTO createEvent(EventRequestDTO requestDTO) {
+        if (requestDTO.getStartDate().isAfter(requestDTO.getEndDate())) {
             throw new RuntimeException("Start date cannot be after end date");
         }
-        return eventRepository.save(event);
+
+        EventModel event = new EventModel();
+        event.setTitle(requestDTO.getTitle());
+        event.setDescription(requestDTO.getDescription());
+        event.setStartDate(requestDTO.getStartDate());
+        event.setEndDate(requestDTO.getEndDate());
+        event.setType(requestDTO.getType());
+        event.setAudience(requestDTO.getAudience());
+
+        EventModel savedEvent = eventRepository.save(event);
+        return eventMapper.toResponseDTO(savedEvent);
     }
 
-    public List<EventModel> listEvents() {
-        return eventRepository.findAll();
+    public List<EventResponseDTO> listEvents() {
+        return eventRepository.findAll().stream()
+            .map(eventMapper::toResponseDTO)
+            .collect(Collectors.toList());
     }
 
     public Map<String, Object> notifyParticipants(Long eventId) {
@@ -47,51 +66,57 @@ public class EventService {
         return notification;
     }
 
-    public List<EventModel> findEventsByDate(LocalDate date) {
-        return eventRepository.findByStartDateBetween(date, date);
+    public List<EventResponseDTO> findEventsByDate(LocalDate date) {
+        return eventRepository.findByStartDateBetween(date, date).stream()
+            .map(eventMapper::toResponseDTO)
+            .collect(Collectors.toList());
     }
 
-    public List<EventModel> findEventsByType(EventTypeEnum type) {
+    public List<EventResponseDTO> findEventsByType(EventTypeEnum type) {
         return eventRepository.findAll().stream()
                 .filter(e -> e.getType().equals(type))
-                .toList();
+                .map(eventMapper::toResponseDTO)
+                .collect(Collectors.toList());
     }
 
-    public List<EventModel> findEventsByMonthYear(int month, int year) {
+    public List<EventResponseDTO> findEventsByMonthYear(int month, int year) {
         LocalDate startDate = LocalDate.of(year, month, 1);
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
-        return eventRepository.findByStartDateBetween(startDate, endDate);
+        return eventRepository.findByStartDateBetween(startDate, endDate).stream()
+            .map(eventMapper::toResponseDTO)
+            .collect(Collectors.toList());
     }
 
     @Transactional
-    public EventModel updateEvent(Long id, EventModel updatedEvent) {
+    public EventResponseDTO updateEvent(Long id, EventRequestDTO requestDTO) {
         EventModel event = eventRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
 
-        if (updatedEvent.getTitle() != null) {
-            event.setTitle(updatedEvent.getTitle());
+        if (requestDTO.getTitle() != null) {
+            event.setTitle(requestDTO.getTitle());
         }
-        if (updatedEvent.getDescription() != null) {
-            event.setDescription(updatedEvent.getDescription());
+        if (requestDTO.getDescription() != null) {
+            event.setDescription(requestDTO.getDescription());
         }
-        if (updatedEvent.getStartDate() != null) {
-            event.setStartDate(updatedEvent.getStartDate());
+        if (requestDTO.getStartDate() != null) {
+            event.setStartDate(requestDTO.getStartDate());
         }
-        if (updatedEvent.getEndDate() != null) {
-            event.setEndDate(updatedEvent.getEndDate());
+        if (requestDTO.getEndDate() != null) {
+            event.setEndDate(requestDTO.getEndDate());
         }
-        if (updatedEvent.getType() != null) {
-            event.setType(updatedEvent.getType());
+        if (requestDTO.getType() != null) {
+            event.setType(requestDTO.getType());
         }
-        if (updatedEvent.getAudience() != null) {
-            event.setAudience(updatedEvent.getAudience());
+        if (requestDTO.getAudience() != null) {
+            event.setAudience(requestDTO.getAudience());
         }
 
         if (event.getStartDate().isAfter(event.getEndDate())) {
             throw new RuntimeException("Start date cannot be after end date");
         }
 
-        return eventRepository.save(event);
+        EventModel updatedEvent = eventRepository.save(event);
+        return eventMapper.toResponseDTO(updatedEvent);
     }
 
     @Transactional

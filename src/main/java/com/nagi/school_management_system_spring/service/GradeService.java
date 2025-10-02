@@ -11,10 +11,15 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.nagi.school_management_system_spring.dto.GradeRequestDTO;
+import com.nagi.school_management_system_spring.dto.GradeResponseDTO;
+import com.nagi.school_management_system_spring.mapper.GradeMapper;
+import com.nagi.school_management_system_spring.model.ClassroomModel;
 import com.nagi.school_management_system_spring.model.GradeModel;
 import com.nagi.school_management_system_spring.model.ReportCardModel;
 import com.nagi.school_management_system_spring.model.StudentModel;
 import com.nagi.school_management_system_spring.model.SubjectModel;
+import com.nagi.school_management_system_spring.model.TeacherModel;
 import com.nagi.school_management_system_spring.model.enums.QuarterEnum;
 import com.nagi.school_management_system_spring.model.enums.ReportCardStatusEnum;
 import com.nagi.school_management_system_spring.repository.ClassroomRepository;
@@ -22,6 +27,7 @@ import com.nagi.school_management_system_spring.repository.GradeRepository;
 import com.nagi.school_management_system_spring.repository.ReportCardRepository;
 import com.nagi.school_management_system_spring.repository.StudentRepository;
 import com.nagi.school_management_system_spring.repository.SubjectRepository;
+import com.nagi.school_management_system_spring.repository.TeacherRepository;
 
 import jakarta.transaction.Transactional;
 
@@ -41,35 +47,62 @@ public class GradeService {
     private ClassroomRepository classroomRepository;
 
     @Autowired
+    private TeacherRepository teacherRepository;
+
+    @Autowired
     private ReportCardRepository reportCardRepository;
 
+    @Autowired
+    private GradeMapper gradeMapper;
+
     @Transactional
-    public GradeModel recordGrade(GradeModel grade) {
-        if (grade.getRecordDate() == null) {
-            grade.setRecordDate(LocalDate.now());
-        }
-        return gradeRepository.save(grade);
+    public GradeResponseDTO recordGrade(GradeRequestDTO requestDTO) {
+        StudentModel student = studentRepository.findById(requestDTO.getStudentId())
+            .orElseThrow(() -> new RuntimeException("Student not found: " + requestDTO.getStudentId()));
+
+        SubjectModel subject = subjectRepository.findById(requestDTO.getSubjectId())
+            .orElseThrow(() -> new RuntimeException("Subject not found: " + requestDTO.getSubjectId()));
+
+        ClassroomModel classroom = classroomRepository.findById(requestDTO.getClassroomId())
+            .orElseThrow(() -> new RuntimeException("Classroom not found: " + requestDTO.getClassroomId()));
+
+        TeacherModel teacher = teacherRepository.findById(requestDTO.getTeacherId())
+            .orElseThrow(() -> new RuntimeException("Teacher not found: " + requestDTO.getTeacherId()));
+
+        GradeModel grade = new GradeModel();
+        grade.setStudent(student);
+        grade.setSubject(subject);
+        grade.setClassroom(classroom);
+        grade.setQuarter(requestDTO.getQuarter());
+        grade.setEvaluationType(requestDTO.getEvaluationType());
+        grade.setValue(requestDTO.getValue());
+        grade.setRecordDate(requestDTO.getRecordDate() != null ? requestDTO.getRecordDate() : LocalDate.now());
+        grade.setTeacher(teacher);
+
+        GradeModel savedGrade = gradeRepository.save(grade);
+        return gradeMapper.toResponseDTO(savedGrade);
     }
 
     @Transactional
-    public GradeModel updateGrade(Long id, GradeModel updatedGrade) {
+    public GradeResponseDTO updateGrade(Long id, GradeRequestDTO requestDTO) {
         GradeModel grade = gradeRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Grade not found with id: " + id));
 
-        if (updatedGrade.getValue() != null) {
-            grade.setValue(updatedGrade.getValue());
+        if (requestDTO.getValue() != null) {
+            grade.setValue(requestDTO.getValue());
         }
-        if (updatedGrade.getQuarter() != null) {
-            grade.setQuarter(updatedGrade.getQuarter());
+        if (requestDTO.getQuarter() != null) {
+            grade.setQuarter(requestDTO.getQuarter());
         }
-        if (updatedGrade.getEvaluationType() != null) {
-            grade.setEvaluationType(updatedGrade.getEvaluationType());
+        if (requestDTO.getEvaluationType() != null) {
+            grade.setEvaluationType(requestDTO.getEvaluationType());
         }
-        if (updatedGrade.getRecordDate() != null) {
-            grade.setRecordDate(updatedGrade.getRecordDate());
+        if (requestDTO.getRecordDate() != null) {
+            grade.setRecordDate(requestDTO.getRecordDate());
         }
 
-        return gradeRepository.save(grade);
+        GradeModel updatedGrade = gradeRepository.save(grade);
+        return gradeMapper.toResponseDTO(updatedGrade);
     }
 
     public BigDecimal calculateAverage(Long studentId, Long subjectId, QuarterEnum quarter) {
@@ -94,14 +127,16 @@ public class GradeService {
         return sum.divide(BigDecimal.valueOf(grades.size()), 2, RoundingMode.HALF_UP);
     }
 
-    public List<GradeModel> findGradesByStudent(Long studentId) {
+    public List<GradeResponseDTO> findGradesByStudent(Long studentId) {
         StudentModel student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
 
-        return gradeRepository.findByStudent(student);
+        return gradeRepository.findByStudent(student).stream()
+            .map(gradeMapper::toResponseDTO)
+            .collect(Collectors.toList());
     }
 
-    public List<GradeModel> findGradesByClassroom(Long classroomId, Long subjectId) {
+    public List<GradeResponseDTO> findGradesByClassroom(Long classroomId, Long subjectId) {
         classroomRepository.findById(classroomId)
                 .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + classroomId));
 
@@ -110,6 +145,7 @@ public class GradeService {
 
         return gradeRepository.findBySubject(subject).stream()
                 .filter(g -> g.getClassroom().getId().equals(classroomId))
+                .map(gradeMapper::toResponseDTO)
                 .collect(Collectors.toList());
     }
 

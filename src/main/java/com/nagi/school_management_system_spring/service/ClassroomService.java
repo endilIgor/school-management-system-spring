@@ -3,10 +3,14 @@ package com.nagi.school_management_system_spring.service;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.nagi.school_management_system_spring.dto.ClassroomRequestDTO;
+import com.nagi.school_management_system_spring.dto.ClassroomResponseDTO;
+import com.nagi.school_management_system_spring.mapper.ClassroomMapper;
 import com.nagi.school_management_system_spring.model.ClassroomModel;
 import com.nagi.school_management_system_spring.model.ClassroomSubjectTeacherModel;
 import com.nagi.school_management_system_spring.model.StudentModel;
@@ -33,13 +37,32 @@ public class ClassroomService {
     @Autowired
     private ClassroomSubjectTeacherRepository classroomSubjectTeacherRepository;
 
+    @Autowired
+    private ClassroomMapper classroomMapper;
+
     @Transactional
-    public ClassroomModel createClassroom(ClassroomModel classroom) {
-        return classroomRepository.save(classroom);
+    public ClassroomResponseDTO createClassroom(ClassroomRequestDTO requestDTO) {
+        ClassroomModel classroom = new ClassroomModel();
+        classroom.setName(requestDTO.getName());
+        classroom.setGrade(requestDTO.getGrade());
+        classroom.setShift(requestDTO.getShift());
+        classroom.setRoom(requestDTO.getRoom());
+        classroom.setMaxCapacity(requestDTO.getMaxCapacity());
+        classroom.setIsActive(requestDTO.getIsActive());
+        classroom.setSchoolYear(requestDTO.getSchoolYear());
+
+        if (requestDTO.getHomeRoomTeacherId() != null) {
+            TeacherModel teacher = teacherRepository.findById(requestDTO.getHomeRoomTeacherId())
+                .orElseThrow(() -> new RuntimeException("Teacher not found: " + requestDTO.getHomeRoomTeacherId()));
+            classroom.setHomeRoomTeacher(teacher);
+        }
+
+        ClassroomModel savedClassroom = classroomRepository.save(classroom);
+        return classroomMapper.toResponseDTO(savedClassroom);
     }
 
     @Transactional
-    public ClassroomModel setHomeRoomTeacher(Long classroomId, Long teacherId) {
+    public ClassroomResponseDTO setHomeRoomTeacher(Long classroomId, Long teacherId) {
         ClassroomModel classroom = classroomRepository.findById(classroomId)
                 .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + classroomId));
 
@@ -47,7 +70,8 @@ public class ClassroomService {
                 .orElseThrow(() -> new RuntimeException("Teacher not found with id: " + teacherId));
 
         classroom.setHomeRoomTeacher(teacher);
-        return classroomRepository.save(classroom);
+        ClassroomModel updatedClassroom = classroomRepository.save(classroom);
+        return classroomMapper.toResponseDTO(updatedClassroom);
     }
 
     @Transactional
@@ -67,8 +91,34 @@ public class ClassroomService {
         studentRepository.save(student);
     }
 
-    public List<ClassroomModel> listByYear(String schoolYear) {
-        return classroomRepository.findBySchoolYear(schoolYear);
+    public List<ClassroomResponseDTO> listByYear(String schoolYear) {
+        return classroomRepository.findBySchoolYear(schoolYear).stream()
+            .map(classroomMapper::toResponseDTO)
+            .collect(Collectors.toList());
+    }
+
+    public ClassroomResponseDTO getClassroomById(Long id) {
+        ClassroomModel classroom = classroomRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + id));
+        return classroomMapper.toResponseDTO(classroom);
+    }
+
+    public List<ClassroomResponseDTO> getAllClassrooms() {
+        return classroomRepository.findAll().stream()
+            .map(classroomMapper::toResponseDTO)
+            .collect(Collectors.toList());
+    }
+
+    public List<ClassroomResponseDTO> findByGradeAndSchoolYear(String grade, String year) {
+        return classroomRepository.findByGradeAndSchoolYear(grade, year).stream()
+            .map(classroomMapper::toResponseDTO)
+            .collect(Collectors.toList());
+    }
+
+    public List<ClassroomResponseDTO> findByShift(com.nagi.school_management_system_spring.model.enums.ShiftEnum shift) {
+        return classroomRepository.findByShift(shift).stream()
+            .map(classroomMapper::toResponseDTO)
+            .collect(Collectors.toList());
     }
 
     public Integer findCapacity(Long classroomId) {
@@ -101,33 +151,39 @@ public class ClassroomService {
     }
 
     @Transactional
-    public ClassroomModel updateData(Long id, ClassroomModel updatedClassroom) {
+    public ClassroomResponseDTO updateData(Long id, ClassroomRequestDTO requestDTO) {
         ClassroomModel classroom = classroomRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + id));
 
-        if (updatedClassroom.getName() != null) {
-            classroom.setName(updatedClassroom.getName());
+        if (requestDTO.getName() != null) {
+            classroom.setName(requestDTO.getName());
         }
-        if (updatedClassroom.getGrade() != null) {
-            classroom.setGrade(updatedClassroom.getGrade());
+        if (requestDTO.getGrade() != null) {
+            classroom.setGrade(requestDTO.getGrade());
         }
-        if (updatedClassroom.getShift() != null) {
-            classroom.setShift(updatedClassroom.getShift());
+        if (requestDTO.getShift() != null) {
+            classroom.setShift(requestDTO.getShift());
         }
-        if (updatedClassroom.getRoom() != null) {
-            classroom.setRoom(updatedClassroom.getRoom());
+        if (requestDTO.getRoom() != null) {
+            classroom.setRoom(requestDTO.getRoom());
         }
-        if (updatedClassroom.getMaxCapacity() != null) {
-            classroom.setMaxCapacity(updatedClassroom.getMaxCapacity());
+        if (requestDTO.getMaxCapacity() != null) {
+            classroom.setMaxCapacity(requestDTO.getMaxCapacity());
         }
-        if (updatedClassroom.getIsActive() != null) {
-            classroom.setIsActive(updatedClassroom.getIsActive());
+        if (requestDTO.getIsActive() != null) {
+            classroom.setIsActive(requestDTO.getIsActive());
         }
-        if (updatedClassroom.getSchoolYear() != null) {
-            classroom.setSchoolYear(updatedClassroom.getSchoolYear());
+        if (requestDTO.getSchoolYear() != null) {
+            classroom.setSchoolYear(requestDTO.getSchoolYear());
+        }
+        if (requestDTO.getHomeRoomTeacherId() != null) {
+            TeacherModel teacher = teacherRepository.findById(requestDTO.getHomeRoomTeacherId())
+                .orElseThrow(() -> new RuntimeException("Teacher not found: " + requestDTO.getHomeRoomTeacherId()));
+            classroom.setHomeRoomTeacher(teacher);
         }
 
-        return classroomRepository.save(classroom);
+        ClassroomModel updatedClassroom = classroomRepository.save(classroom);
+        return classroomMapper.toResponseDTO(updatedClassroom);
     }
 
     public List<ClassroomSubjectTeacherModel> getClassroomSubjects(Long classroomId) {

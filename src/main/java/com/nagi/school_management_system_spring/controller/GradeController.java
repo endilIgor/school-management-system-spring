@@ -5,7 +5,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,9 +15,12 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nagi.school_management_system_spring.model.GradeModel;
+import com.nagi.school_management_system_spring.dto.GradeRequestDTO;
+import com.nagi.school_management_system_spring.dto.GradeResponseDTO;
 import com.nagi.school_management_system_spring.model.enums.QuarterEnum;
 import com.nagi.school_management_system_spring.service.GradeService;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/grades")
@@ -28,25 +30,17 @@ public class GradeController {
     private GradeService gradeService;
 
     @GetMapping("/student/{studentId}")
-    public ResponseEntity<List<GradeModel>> getGradesByStudent(@PathVariable Long studentId) {
-        try {
-            List<GradeModel> grades = gradeService.findGradesByStudent(studentId);
-            return ResponseEntity.ok(grades);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+    public ResponseEntity<List<GradeResponseDTO>> getGradesByStudent(@PathVariable Long studentId) {
+        List<GradeResponseDTO> grades = gradeService.findGradesByStudent(studentId);
+        return ResponseEntity.ok(grades);
     }
 
     @GetMapping("/classroom/{classroomId}/subject/{subjectId}")
-    public ResponseEntity<List<GradeModel>> getGradesByClassroomAndSubject(
+    public ResponseEntity<List<GradeResponseDTO>> getGradesByClassroomAndSubject(
             @PathVariable Long classroomId,
             @PathVariable Long subjectId) {
-        try {
-            List<GradeModel> grades = gradeService.findGradesByClassroom(classroomId, subjectId);
-            return ResponseEntity.ok(grades);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        List<GradeResponseDTO> grades = gradeService.findGradesByClassroom(classroomId, subjectId);
+        return ResponseEntity.ok(grades);
     }
 
     @GetMapping("/average")
@@ -54,34 +48,22 @@ public class GradeController {
             @RequestParam Long studentId,
             @RequestParam Long subjectId,
             @RequestParam QuarterEnum quarter) {
-        try {
-            BigDecimal average = gradeService.calculateAverage(studentId, subjectId, quarter);
-            return ResponseEntity.ok(average);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        BigDecimal average = gradeService.calculateAverage(studentId, subjectId, quarter);
+        return ResponseEntity.ok(average);
     }
 
     @PostMapping
-    public ResponseEntity<GradeModel> recordGrade(@RequestBody GradeModel grade) {
-        try {
-            GradeModel savedGrade = gradeService.recordGrade(grade);
-            return ResponseEntity.status(HttpStatus.CREATED).body(savedGrade);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
+    public ResponseEntity<GradeResponseDTO> recordGrade(@Valid @RequestBody GradeRequestDTO requestDTO) {
+        GradeResponseDTO grade = gradeService.recordGrade(requestDTO);
+        return ResponseEntity.ok(grade);
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<GradeModel> updateGrade(
+    public ResponseEntity<GradeResponseDTO> updateGrade(
             @PathVariable Long id,
-            @RequestBody GradeModel grade) {
-        try {
-            GradeModel updatedGrade = gradeService.updateGrade(id, grade);
-            return ResponseEntity.ok(updatedGrade);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+            @Valid @RequestBody GradeRequestDTO requestDTO) {
+        GradeResponseDTO grade = gradeService.updateGrade(id, requestDTO);
+        return ResponseEntity.ok(grade);
     }
 
     @GetMapping("/report-card/{studentId}/{quarter}")
@@ -89,11 +71,7 @@ public class GradeController {
             @PathVariable Long studentId,
             @PathVariable QuarterEnum quarter,
             @RequestParam(defaultValue = "2024") String schoolYear) {
-        try {
-            Map<String, Object> reportCard = gradeService.generateReportCard(studentId, quarter, schoolYear);
-            return ResponseEntity.ok(reportCard);
-        } catch (RuntimeException e) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
-        }
+        Map<String, Object> reportCard = gradeService.generateReportCard(studentId, quarter, schoolYear);
+        return ResponseEntity.ok(reportCard);
     }
 }

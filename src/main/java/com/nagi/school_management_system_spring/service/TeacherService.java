@@ -2,15 +2,21 @@ package com.nagi.school_management_system_spring.service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.nagi.school_management_system_spring.dto.TeacherRequestDTO;
+import com.nagi.school_management_system_spring.dto.TeacherResponseDTO;
+import com.nagi.school_management_system_spring.mapper.TeacherMapper;
 import com.nagi.school_management_system_spring.model.ClassroomSubjectTeacherModel;
 import com.nagi.school_management_system_spring.model.SubjectModel;
 import com.nagi.school_management_system_spring.model.TeacherModel;
+import com.nagi.school_management_system_spring.model.UserModel;
 import com.nagi.school_management_system_spring.repository.ClassroomSubjectTeacherRepository;
 import com.nagi.school_management_system_spring.repository.TeacherRepository;
+import com.nagi.school_management_system_spring.repository.UserRepository;
 
 import jakarta.transaction.Transactional;
 
@@ -21,30 +27,48 @@ public class TeacherService {
     private TeacherRepository teacherRepository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private ClassroomSubjectTeacherRepository classroomSubjectTeacherRepository;
 
+    @Autowired
+    private TeacherMapper teacherMapper;
+
     @Transactional
-    public TeacherModel hireTeacher(TeacherModel teacher) {
-        teacher.setHireDate(LocalDateTime.now());
-        return teacherRepository.save(teacher);
+    public TeacherResponseDTO hireTeacher(TeacherRequestDTO requestDTO) {
+        UserModel user = userRepository.findById(requestDTO.getUserId())
+            .orElseThrow(() -> new RuntimeException("User not found: " + requestDTO.getUserId()));
+
+        TeacherModel teacher = new TeacherModel();
+        teacher.setUser(user);
+        teacher.setRegistration(requestDTO.getRegistration());
+        teacher.setSpecialization(requestDTO.getSpecialization());
+        teacher.setStatus(requestDTO.getStatus());
+        teacher.setSalary(requestDTO.getSalary());
+        teacher.setHireDate(requestDTO.getHireDate() != null ? requestDTO.getHireDate() : LocalDateTime.now());
+
+        TeacherModel savedTeacher = teacherRepository.save(teacher);
+        return teacherMapper.toResponseDTO(savedTeacher);
     }
 
     @Transactional
-    public TeacherModel updateData(Long id, TeacherModel updatedTeacher) {
+    public TeacherResponseDTO updateData(Long id, TeacherRequestDTO requestDTO) {
         TeacherModel teacher = teacherRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Teacher not found with id: " + id));
 
-        if (updatedTeacher.getSpecialization() != null) {
-            teacher.setSpecialization(updatedTeacher.getSpecialization());
+        if (requestDTO.getSpecialization() != null) {
+            teacher.setSpecialization(requestDTO.getSpecialization());
         }
-        if (updatedTeacher.getStatus() != null) {
-            teacher.setStatus(updatedTeacher.getStatus());
+        if (requestDTO.getStatus() != null) {
+            teacher.setStatus(requestDTO.getStatus());
         }
-        if (updatedTeacher.getSalary() != null) {
-            teacher.setSalary(updatedTeacher.getSalary());
+        if (requestDTO.getSalary() != null) {
+            teacher.setSalary(requestDTO.getSalary());
         }
 
-        return teacherRepository.save(teacher);
+        TeacherModel updatedTeacher = teacherRepository.save(teacher);
+        return teacherMapper.toResponseDTO(updatedTeacher);
     }
 
     @Transactional
@@ -58,8 +82,22 @@ public class TeacherService {
         }
     }
 
-    public List<TeacherModel> listBySpecialization(String specialization) {
-        return teacherRepository.findBySpecialization(specialization);
+    public List<TeacherResponseDTO> listBySpecialization(String specialization) {
+        return teacherRepository.findBySpecialization(specialization).stream()
+            .map(teacherMapper::toResponseDTO)
+            .collect(Collectors.toList());
+    }
+
+    public TeacherResponseDTO getTeacherById(Long id) {
+        TeacherModel teacher = teacherRepository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Teacher not found with id: " + id));
+        return teacherMapper.toResponseDTO(teacher);
+    }
+
+    public List<TeacherResponseDTO> getAllTeachers() {
+        return teacherRepository.findAll().stream()
+            .map(teacherMapper::toResponseDTO)
+            .collect(Collectors.toList());
     }
 
     public Integer findWorkload(Long teacherId) {
