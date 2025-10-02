@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import com.nagi.school_management_system_spring.model.ClassroomModel;
 import com.nagi.school_management_system_spring.model.GradeModel;
 import com.nagi.school_management_system_spring.model.ReportCardModel;
 import com.nagi.school_management_system_spring.model.StudentModel;
@@ -77,7 +76,7 @@ public class GradeService {
         StudentModel student = studentRepository.findById(studentId)
                 .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
 
-        SubjectModel subject = subjectRepository.findById(subjectId)
+        subjectRepository.findById(subjectId)
                 .orElseThrow(() -> new RuntimeException("Subject not found with id: " + subjectId));
 
         List<GradeModel> grades = gradeRepository.findByStudentAndQuarter(student, quarter).stream()
@@ -103,7 +102,7 @@ public class GradeService {
     }
 
     public List<GradeModel> findGradesByClassroom(Long classroomId, Long subjectId) {
-        ClassroomModel classroom = classroomRepository.findById(classroomId)
+        classroomRepository.findById(classroomId)
                 .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + classroomId));
 
         SubjectModel subject = subjectRepository.findById(subjectId)
@@ -129,7 +128,6 @@ public class GradeService {
         int subjectCount = 0;
 
         for (Map.Entry<Long, List<GradeModel>> entry : gradesBySubject.entrySet()) {
-            Long subjectId = entry.getKey();
             List<GradeModel> subjectGrades = entry.getValue();
 
             BigDecimal subjectSum = subjectGrades.stream()
