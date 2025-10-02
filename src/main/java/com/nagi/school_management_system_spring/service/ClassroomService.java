@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import com.nagi.school_management_system_spring.dto.ClassroomRequestDTO;
 import com.nagi.school_management_system_spring.dto.ClassroomResponseDTO;
+import com.nagi.school_management_system_spring.exception.ResourceNotFoundException;
 import com.nagi.school_management_system_spring.mapper.ClassroomMapper;
 import com.nagi.school_management_system_spring.model.ClassroomModel;
 import com.nagi.school_management_system_spring.model.ClassroomSubjectTeacherModel;
@@ -53,7 +54,7 @@ public class ClassroomService {
 
         if (requestDTO.getHomeRoomTeacherId() != null) {
             TeacherModel teacher = teacherRepository.findById(requestDTO.getHomeRoomTeacherId())
-                .orElseThrow(() -> new RuntimeException("Teacher not found: " + requestDTO.getHomeRoomTeacherId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + requestDTO.getHomeRoomTeacherId()));
             classroom.setHomeRoomTeacher(teacher);
         }
 
@@ -64,10 +65,10 @@ public class ClassroomService {
     @Transactional
     public ClassroomResponseDTO setHomeRoomTeacher(Long classroomId, Long teacherId) {
         ClassroomModel classroom = classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + classroomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + classroomId));
 
         TeacherModel teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new RuntimeException("Teacher not found with id: " + teacherId));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + teacherId));
 
         classroom.setHomeRoomTeacher(teacher);
         ClassroomModel updatedClassroom = classroomRepository.save(classroom);
@@ -77,14 +78,14 @@ public class ClassroomService {
     @Transactional
     public void addStudent(Long classroomId, Long studentId) {
         ClassroomModel classroom = classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + classroomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + classroomId));
 
         StudentModel student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
 
         List<StudentModel> currentStudents = studentRepository.findByClassroom(classroom);
         if (currentStudents.size() >= classroom.getMaxCapacity()) {
-            throw new RuntimeException("Classroom is at full capacity");
+            throw new IllegalArgumentException("Classroom is at full capacity");
         }
 
         student.setClassroom(classroom);
@@ -99,7 +100,7 @@ public class ClassroomService {
 
     public ClassroomResponseDTO getClassroomById(Long id) {
         ClassroomModel classroom = classroomRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + id));
         return classroomMapper.toResponseDTO(classroom);
     }
 
@@ -123,14 +124,14 @@ public class ClassroomService {
 
     public Integer findCapacity(Long classroomId) {
         ClassroomModel classroom = classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + classroomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + classroomId));
 
         return classroom.getMaxCapacity();
     }
 
     public Map<String, Object> checkCapacity(Long classroomId) {
         ClassroomModel classroom = classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + classroomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + classroomId));
 
         List<StudentModel> students = studentRepository.findByClassroom(classroom);
         Integer currentStudents = students.size();
@@ -153,7 +154,7 @@ public class ClassroomService {
     @Transactional
     public ClassroomResponseDTO updateData(Long id, ClassroomRequestDTO requestDTO) {
         ClassroomModel classroom = classroomRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + id));
 
         if (requestDTO.getName() != null) {
             classroom.setName(requestDTO.getName());
@@ -178,7 +179,7 @@ public class ClassroomService {
         }
         if (requestDTO.getHomeRoomTeacherId() != null) {
             TeacherModel teacher = teacherRepository.findById(requestDTO.getHomeRoomTeacherId())
-                .orElseThrow(() -> new RuntimeException("Teacher not found: " + requestDTO.getHomeRoomTeacherId()));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + requestDTO.getHomeRoomTeacherId()));
             classroom.setHomeRoomTeacher(teacher);
         }
 
@@ -188,7 +189,7 @@ public class ClassroomService {
 
     public List<ClassroomSubjectTeacherModel> getClassroomSubjects(Long classroomId) {
         ClassroomModel classroom = classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + classroomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + classroomId));
 
         return classroomSubjectTeacherRepository.findByClassroom(classroom);
     }

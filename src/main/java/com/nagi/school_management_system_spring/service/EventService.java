@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 
 import com.nagi.school_management_system_spring.dto.EventRequestDTO;
 import com.nagi.school_management_system_spring.dto.EventResponseDTO;
+import com.nagi.school_management_system_spring.exception.ResourceNotFoundException;
 import com.nagi.school_management_system_spring.mapper.EventMapper;
 import com.nagi.school_management_system_spring.model.EventModel;
 import com.nagi.school_management_system_spring.model.enums.EventTypeEnum;
@@ -30,7 +31,7 @@ public class EventService {
     @Transactional
     public EventResponseDTO createEvent(EventRequestDTO requestDTO) {
         if (requestDTO.getStartDate().isAfter(requestDTO.getEndDate())) {
-            throw new RuntimeException("Start date cannot be after end date");
+            throw new IllegalArgumentException("Start date cannot be after end date");
         }
 
         EventModel event = new EventModel();
@@ -53,7 +54,7 @@ public class EventService {
 
     public Map<String, Object> notifyParticipants(Long eventId) {
         EventModel event = eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + eventId));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + eventId));
 
         Map<String, Object> notification = new HashMap<>();
         notification.put("eventId", eventId);
@@ -90,7 +91,7 @@ public class EventService {
     @Transactional
     public EventResponseDTO updateEvent(Long id, EventRequestDTO requestDTO) {
         EventModel event = eventRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
 
         if (requestDTO.getTitle() != null) {
             event.setTitle(requestDTO.getTitle());
@@ -112,7 +113,7 @@ public class EventService {
         }
 
         if (event.getStartDate().isAfter(event.getEndDate())) {
-            throw new RuntimeException("Start date cannot be after end date");
+            throw new IllegalArgumentException("Start date cannot be after end date");
         }
 
         EventModel updatedEvent = eventRepository.save(event);
@@ -122,7 +123,7 @@ public class EventService {
     @Transactional
     public void deleteEvent(Long id) {
         EventModel event = eventRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found with id: " + id));
         eventRepository.delete(event);
     }
 }

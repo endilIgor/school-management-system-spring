@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 
 import com.nagi.school_management_system_spring.dto.AttendanceRequestDTO;
 import com.nagi.school_management_system_spring.dto.AttendanceResponseDTO;
+import com.nagi.school_management_system_spring.exception.ResourceNotFoundException;
 import com.nagi.school_management_system_spring.mapper.AttendanceMapper;
 import com.nagi.school_management_system_spring.model.AttendanceModel;
 import com.nagi.school_management_system_spring.model.ClassroomModel;
@@ -51,16 +52,16 @@ public class AttendanceService {
     @Transactional
     public AttendanceResponseDTO recordAttendance(AttendanceRequestDTO requestDTO) {
         StudentModel student = studentRepository.findById(requestDTO.getStudentId())
-            .orElseThrow(() -> new RuntimeException("Student not found: " + requestDTO.getStudentId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + requestDTO.getStudentId()));
 
         ClassroomModel classroom = classroomRepository.findById(requestDTO.getClassroomId())
-            .orElseThrow(() -> new RuntimeException("Classroom not found: " + requestDTO.getClassroomId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + requestDTO.getClassroomId()));
 
         SubjectModel subject = subjectRepository.findById(requestDTO.getSubjectId())
-            .orElseThrow(() -> new RuntimeException("Subject not found: " + requestDTO.getSubjectId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Subject not found with id: " + requestDTO.getSubjectId()));
 
         TeacherModel teacher = teacherRepository.findById(requestDTO.getTeacherId())
-            .orElseThrow(() -> new RuntimeException("Teacher not found: " + requestDTO.getTeacherId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + requestDTO.getTeacherId()));
 
         AttendanceModel attendance = new AttendanceModel();
         attendance.setStudent(student);
@@ -78,14 +79,14 @@ public class AttendanceService {
     @Transactional
     public AttendanceResponseDTO justifyAbsence(Long attendanceId, String justification) {
         AttendanceModel attendance = attendanceRepository.findById(attendanceId)
-                .orElseThrow(() -> new RuntimeException("Attendance not found with id: " + attendanceId));
+                .orElseThrow(() -> new ResourceNotFoundException("Attendance not found with id: " + attendanceId));
 
         if (Boolean.TRUE.equals(attendance.getPresent())) {
-            throw new RuntimeException("Cannot justify absence for a present attendance");
+            throw new IllegalArgumentException("Cannot justify absence for a present attendance");
         }
 
         if (justification == null || justification.trim().isEmpty()) {
-            throw new RuntimeException("Justification cannot be empty");
+            throw new IllegalArgumentException("Justification cannot be empty");
         }
 
         attendance.setJustification(justification);
@@ -95,7 +96,7 @@ public class AttendanceService {
 
     public BigDecimal calculateOverallAttendance(Long studentId, LocalDate startDate, LocalDate endDate) {
         StudentModel student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
 
         List<AttendanceModel> allAttendances = attendanceRepository.findByStudentAndDateBetween(
                 student, startDate, endDate);
@@ -117,7 +118,7 @@ public class AttendanceService {
 
     public List<AttendanceResponseDTO> findAttendanceByStudent(Long studentId, LocalDate startDate, LocalDate endDate) {
         StudentModel student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
 
         return attendanceRepository.findByStudentAndDateBetween(student, startDate, endDate).stream()
             .map(attendanceMapper::toResponseDTO)
@@ -126,7 +127,7 @@ public class AttendanceService {
 
     public List<AttendanceResponseDTO> findAttendanceByClassroomAndDate(Long classroomId, LocalDate date) {
         ClassroomModel classroom = classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + classroomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + classroomId));
 
         return attendanceRepository.findByClassroomAndDate(classroom, date).stream()
             .map(attendanceMapper::toResponseDTO)
@@ -135,7 +136,7 @@ public class AttendanceService {
 
     public Map<String, Object> generateAttendanceReport(Long studentId, LocalDate startDate, LocalDate endDate) {
         StudentModel student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
 
         List<AttendanceModel> attendances = attendanceRepository.findByStudentAndDateBetween(
                 student, startDate, endDate);

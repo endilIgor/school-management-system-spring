@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 
 import com.nagi.school_management_system_spring.dto.GradeRequestDTO;
 import com.nagi.school_management_system_spring.dto.GradeResponseDTO;
+import com.nagi.school_management_system_spring.exception.InvalidGradeException;
+import com.nagi.school_management_system_spring.exception.ResourceNotFoundException;
 import com.nagi.school_management_system_spring.mapper.GradeMapper;
 import com.nagi.school_management_system_spring.model.ClassroomModel;
 import com.nagi.school_management_system_spring.model.GradeModel;
@@ -58,16 +60,20 @@ public class GradeService {
     @Transactional
     public GradeResponseDTO recordGrade(GradeRequestDTO requestDTO) {
         StudentModel student = studentRepository.findById(requestDTO.getStudentId())
-            .orElseThrow(() -> new RuntimeException("Student not found: " + requestDTO.getStudentId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + requestDTO.getStudentId()));
 
         SubjectModel subject = subjectRepository.findById(requestDTO.getSubjectId())
-            .orElseThrow(() -> new RuntimeException("Subject not found: " + requestDTO.getSubjectId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Subject not found with id: " + requestDTO.getSubjectId()));
 
         ClassroomModel classroom = classroomRepository.findById(requestDTO.getClassroomId())
-            .orElseThrow(() -> new RuntimeException("Classroom not found: " + requestDTO.getClassroomId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + requestDTO.getClassroomId()));
 
         TeacherModel teacher = teacherRepository.findById(requestDTO.getTeacherId())
-            .orElseThrow(() -> new RuntimeException("Teacher not found: " + requestDTO.getTeacherId()));
+            .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + requestDTO.getTeacherId()));
+
+        if (requestDTO.getValue().compareTo(BigDecimal.ZERO) < 0 || requestDTO.getValue().compareTo(BigDecimal.TEN) > 0) {
+            throw new InvalidGradeException("Grade value must be between 0 and 10. Received: " + requestDTO.getValue());
+        }
 
         GradeModel grade = new GradeModel();
         grade.setStudent(student);
@@ -86,9 +92,12 @@ public class GradeService {
     @Transactional
     public GradeResponseDTO updateGrade(Long id, GradeRequestDTO requestDTO) {
         GradeModel grade = gradeRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Grade not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Grade not found with id: " + id));
 
         if (requestDTO.getValue() != null) {
+            if (requestDTO.getValue().compareTo(BigDecimal.ZERO) < 0 || requestDTO.getValue().compareTo(BigDecimal.TEN) > 0) {
+                throw new InvalidGradeException("Grade value must be between 0 and 10. Received: " + requestDTO.getValue());
+            }
             grade.setValue(requestDTO.getValue());
         }
         if (requestDTO.getQuarter() != null) {
@@ -107,10 +116,10 @@ public class GradeService {
 
     public BigDecimal calculateAverage(Long studentId, Long subjectId, QuarterEnum quarter) {
         StudentModel student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
 
         subjectRepository.findById(subjectId)
-                .orElseThrow(() -> new RuntimeException("Subject not found with id: " + subjectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Subject not found with id: " + subjectId));
 
         List<GradeModel> grades = gradeRepository.findByStudentAndQuarter(student, quarter).stream()
                 .filter(g -> g.getSubject().getId().equals(subjectId))
@@ -129,7 +138,7 @@ public class GradeService {
 
     public List<GradeResponseDTO> findGradesByStudent(Long studentId) {
         StudentModel student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
 
         return gradeRepository.findByStudent(student).stream()
             .map(gradeMapper::toResponseDTO)
@@ -138,10 +147,10 @@ public class GradeService {
 
     public List<GradeResponseDTO> findGradesByClassroom(Long classroomId, Long subjectId) {
         classroomRepository.findById(classroomId)
-                .orElseThrow(() -> new RuntimeException("Classroom not found with id: " + classroomId));
+                .orElseThrow(() -> new ResourceNotFoundException("Classroom not found with id: " + classroomId));
 
         SubjectModel subject = subjectRepository.findById(subjectId)
-                .orElseThrow(() -> new RuntimeException("Subject not found with id: " + subjectId));
+                .orElseThrow(() -> new ResourceNotFoundException("Subject not found with id: " + subjectId));
 
         return gradeRepository.findBySubject(subject).stream()
                 .filter(g -> g.getClassroom().getId().equals(classroomId))
@@ -152,7 +161,7 @@ public class GradeService {
     @Transactional
     public Map<String, Object> generateReportCard(Long studentId, QuarterEnum quarter, String schoolYear) {
         StudentModel student = studentRepository.findById(studentId)
-                .orElseThrow(() -> new RuntimeException("Student not found with id: " + studentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found with id: " + studentId));
 
         List<GradeModel> grades = gradeRepository.findByStudentAndQuarter(student, quarter);
 

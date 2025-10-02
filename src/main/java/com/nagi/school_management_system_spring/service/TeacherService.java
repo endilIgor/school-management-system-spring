@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 
 import com.nagi.school_management_system_spring.dto.TeacherRequestDTO;
 import com.nagi.school_management_system_spring.dto.TeacherResponseDTO;
+import com.nagi.school_management_system_spring.exception.ResourceNotFoundException;
 import com.nagi.school_management_system_spring.mapper.TeacherMapper;
 import com.nagi.school_management_system_spring.model.ClassroomSubjectTeacherModel;
 import com.nagi.school_management_system_spring.model.SubjectModel;
@@ -38,7 +39,7 @@ public class TeacherService {
     @Transactional
     public TeacherResponseDTO hireTeacher(TeacherRequestDTO requestDTO) {
         UserModel user = userRepository.findById(requestDTO.getUserId())
-            .orElseThrow(() -> new RuntimeException("User not found: " + requestDTO.getUserId()));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + requestDTO.getUserId()));
 
         TeacherModel teacher = new TeacherModel();
         teacher.setUser(user);
@@ -55,7 +56,7 @@ public class TeacherService {
     @Transactional
     public TeacherResponseDTO updateData(Long id, TeacherRequestDTO requestDTO) {
         TeacherModel teacher = teacherRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Teacher not found with id: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + id));
 
         if (requestDTO.getSpecialization() != null) {
             teacher.setSpecialization(requestDTO.getSpecialization());
@@ -74,7 +75,7 @@ public class TeacherService {
     @Transactional
     public void assignSubjects(Long teacherId, List<ClassroomSubjectTeacherModel> assignments) {
         TeacherModel teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new RuntimeException("Teacher not found with id: " + teacherId));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + teacherId));
 
         for (ClassroomSubjectTeacherModel assignment : assignments) {
             assignment.setTeacher(teacher);
@@ -90,7 +91,7 @@ public class TeacherService {
 
     public TeacherResponseDTO getTeacherById(Long id) {
         TeacherModel teacher = teacherRepository.findById(id)
-            .orElseThrow(() -> new RuntimeException("Teacher not found with id: " + id));
+            .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + id));
         return teacherMapper.toResponseDTO(teacher);
     }
 
@@ -102,7 +103,7 @@ public class TeacherService {
 
     public Integer findWorkload(Long teacherId) {
         TeacherModel teacher = teacherRepository.findById(teacherId)
-                .orElseThrow(() -> new RuntimeException("Teacher not found with id: " + teacherId));
+                .orElseThrow(() -> new ResourceNotFoundException("Teacher not found with id: " + teacherId));
 
         List<ClassroomSubjectTeacherModel> assignments = classroomSubjectTeacherRepository.findByTeacher(teacher);
 
