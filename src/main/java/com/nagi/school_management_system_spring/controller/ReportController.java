@@ -15,14 +15,14 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nagi.school_management_system_spring.service.ReportService;
+import com.nagi.school_management_system_spring.service.ReportCardService;
 
 @RestController
 @RequestMapping("/reports")
 public class ReportController {
 
     @Autowired
-    private ReportService reportService;
+    private ReportCardService reportService;
 
     @GetMapping("/classroom/{classroomId}/grades")
     public ResponseEntity<Map<String, Object>> getGradesByClassroom(@PathVariable Long classroomId) {
