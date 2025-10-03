@@ -17,6 +17,9 @@ import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import com.nagi.school_management_system_spring.validation.annotation.ValidWorkload;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -40,6 +43,7 @@ public class SubjectModel {
     @NotBlank(message = "Code is mandatory!!")
     private String code;
 
+    @ValidWorkload
     private Integer workload;
 
     private String description;

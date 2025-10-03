@@ -5,9 +5,9 @@ import java.time.LocalDateTime;
 
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
-import org.hibernate.validator.constraints.br.CPF;
 
 import com.nagi.school_management_system_spring.model.enums.UserTypeEnum;
+import com.nagi.school_management_system_spring.validation.annotation.ValidCPF;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -54,7 +54,7 @@ public class UserModel {
     private String phoneNumber;
 
     @NotBlank(message = "CPF is mandatory!!")
-    @CPF(message = "Invalid CPF format!!")
+    @ValidCPF
     private String cpf;
 
     @NotBlank(message = "Address is mandatory!!")

@@ -19,6 +19,9 @@ import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+
+import com.nagi.school_management_system_spring.validation.annotation.ValidEventDate;
+
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,6 +33,7 @@ import lombok.Setter;
 @AllArgsConstructor
 @Getter
 @Setter
+@ValidEventDate
 public class EventModel {
 
     @Id
